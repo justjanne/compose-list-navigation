@@ -1,5 +1,6 @@
 package org.example.project
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -42,6 +43,7 @@ fun MessageBubble(
     showSender: Boolean,
     avatar: @Composable () -> Unit,
     sender: @Composable () -> Unit,
+    timestamp: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
@@ -64,7 +66,10 @@ fun MessageBubble(
             horizontalAlignment = if (isMe) Alignment.End else Alignment.Start,
         ) {
             if (showSender) {
-                sender()
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    sender()
+                    timestamp()
+                }
                 Spacer(Modifier.height(2.dp))
             }
             Surface(
