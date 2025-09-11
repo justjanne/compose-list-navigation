@@ -1,4 +1,4 @@
-rootProject.name = "KotlinProject"
+rootProject.name = "compose-list-navigation"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 pluginManagement {

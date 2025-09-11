@@ -16,7 +16,7 @@ fun main() = application {
     Window(
         state = state,
         onCloseRequest = ::exitApplication,
-        title = "KotlinProject",
+        title = "compose-list-navigation",
     ) {
         CompositionLocalProvider(
             LocalDensity provides LocalDensity.current.let {
