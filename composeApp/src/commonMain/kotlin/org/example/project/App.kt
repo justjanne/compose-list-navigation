@@ -44,14 +44,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinproject.composeapp.generated.resources.Res
-import kotlinproject.composeapp.generated.resources.add_reaction
-import kotlinproject.composeapp.generated.resources.arrow_back
-import kotlinproject.composeapp.generated.resources.call
-import kotlinproject.composeapp.generated.resources.more_vert
-import kotlinproject.composeapp.generated.resources.send
-import kotlinproject.composeapp.generated.resources.settings
-import kotlinproject.composeapp.generated.resources.videocam
+import compose_list_navigation.composeapp.generated.resources.Res
+import compose_list_navigation.composeapp.generated.resources.add_reaction
+import compose_list_navigation.composeapp.generated.resources.arrow_back
+import compose_list_navigation.composeapp.generated.resources.call
+import compose_list_navigation.composeapp.generated.resources.more_vert
+import compose_list_navigation.composeapp.generated.resources.send
+import compose_list_navigation.composeapp.generated.resources.settings
+import compose_list_navigation.composeapp.generated.resources.videocam
 import org.jetbrains.compose.resources.vectorResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
