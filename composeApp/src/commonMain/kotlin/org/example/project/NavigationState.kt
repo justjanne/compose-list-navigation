@@ -154,3 +154,9 @@ fun Modifier.navigationListItem(state: NavigationState, requester: FocusRequeste
         .focusRequester(requester)
         .focusProperties { canFocus = state.active == requester }
 }
+
+@Composable
+fun Modifier.navigationListItemChild(state: NavigationState, parent: FocusRequester): Modifier {
+    return this then Modifier
+        .focusProperties { canFocus = state.active == parent }
+}

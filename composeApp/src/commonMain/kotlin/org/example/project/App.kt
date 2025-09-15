@@ -32,6 +32,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Composition
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -104,6 +106,9 @@ fun App() {
 
                         val navigationState = rememberNavigationState(selectedChat.value.second, SampleData.roomItems)
                         val lazyListState = rememberListNavigationState(navigationState)
+                        LaunchedEffect(selectedChat.value) {
+                            navigationState.current.value = selectedChat.value.second
+                        }
                         LazyColumn(
                             state = lazyListState,
                             modifier = Modifier.navigationList(navigationState, lazyListState),
@@ -235,13 +240,9 @@ fun App() {
                                     modifier = Modifier.paddingFromBaseline(top = 20.sp),
                                 )
                             },
-                            modifier = Modifier
-                                .focusBorder(
-                                    interactionSource,
-                                    if (message.isMe) MessageBubbleDefaults.shapeOwn else MessageBubbleDefaults.shapeOther,
-                                )
-                                .navigationListItem(navigationState, messageFocusRequester)
-                                .focusable(true, interactionSource)
+                            modifier = Modifier.navigationListItem(navigationState, messageFocusRequester),
+                            childModifier = Modifier.navigationListItemChild(navigationState, messageFocusRequester),
+                            interactionSource = interactionSource,
                         ) {
                             Text(message.content, style = MaterialTheme.typography.bodyMedium)
                         }
