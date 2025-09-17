@@ -1,89 +1,34 @@
 package org.example.project
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFrom
-import androidx.compose.foundation.layout.paddingFromBaseline
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.PermanentDrawerSheet
-import androidx.compose.material3.PermanentNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Composition
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.FirstBaseline
-import androidx.compose.ui.layout.LastBaseline
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import compose_list_navigation.composeapp.generated.resources.Res
-import compose_list_navigation.composeapp.generated.resources.add_reaction
-import compose_list_navigation.composeapp.generated.resources.arrow_back
-import compose_list_navigation.composeapp.generated.resources.call
-import compose_list_navigation.composeapp.generated.resources.more_vert
-import compose_list_navigation.composeapp.generated.resources.send
-import compose_list_navigation.composeapp.generated.resources.settings
-import compose_list_navigation.composeapp.generated.resources.videocam
+import compose_list_navigation.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.vectorResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import kotlin.uuid.ExperimentalUuidApi
 
-@Composable
-fun Avatar(content: String, size: Dp) {
-    Surface(
-        modifier = Modifier.size(size),
-        border = BorderStroke(2.dp, MaterialTheme.colorScheme.background),
-        shadowElevation = 1.dp,
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.67f),
-        shape = CircleShape,
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                content,
-                textAlign = TextAlign.Center,
-                fontSize = size.value.div(2).sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalUuidApi::class)
 @Composable
 @Preview
 fun App() {
+    val rooms = remember { mutableStateOf(SampleData.rooms) }
+    val messages = remember { mutableStateOf(SampleData.messages) }
+
     MaterialTheme {
-        val selectedChat = remember { mutableStateOf(SampleData.rooms.find { it.first == "Weltraum" }!!) }
+        val selectedChat = remember { mutableStateOf(rooms.value.find { it.id == RoomId("#space") }!!.id) }
         PermanentNavigationDrawer(
             drawerContent = {
                 PermanentDrawerSheet {
@@ -104,32 +49,66 @@ fun App() {
                             }
                         )
 
-                        val navigationState = rememberNavigationState(selectedChat.value.second, SampleData.roomItems)
-                        val lazyListState = rememberListNavigationState(navigationState)
-                        LaunchedEffect(selectedChat.value) {
-                            navigationState.current.value = selectedChat.value.second
-                        }
-                        LazyColumn(
-                            state = lazyListState,
-                            modifier = Modifier.navigationList(navigationState, lazyListState),
-                            contentPadding = PaddingValues(vertical = 12.dp),
-                        ) {
-                            items(SampleData.rooms) { room ->
-                                val interactionSource = remember { MutableInteractionSource() }
 
-                                ListItem(
-                                    leadingContent = { Avatar(room.first.first().toString(), size = 40.dp) },
-                                    headlineContent = {
-                                        Text(room.first)
-                                    },
-                                    supportingContent = { Text("Lorem Ipsum I dolor sit amet") },
-                                    modifier = Modifier
-                                        .focusBorder(interactionSource)
-                                        .navigationListItem(navigationState, room.second)
-                                        .clickable(interactionSource, LocalIndication.current) {
-                                            selectedChat.value = room
+                        val defaultItem = selectedChat
+                        val lazyListState = rememberLazyListState(rooms.value.indexOfFirst { it.id == defaultItem.value })
+
+                        RovingFocusContainer {
+                            val rovingFocusState = LocalRovingFocus.current
+                            LaunchedEffect(rovingFocusState, defaultItem.value) {
+                                val nextItem = defaultItem.value
+                                rovingFocusState.selectItem(nextItem) {
+                                    lazyListState.scrollToItem(rooms.value.indexOfFirst { it.id == nextItem })
+                                }
+                            }
+
+                            LazyColumn(
+                                state = lazyListState,
+                                contentPadding = PaddingValues(vertical = 12.dp),
+                                modifier = Modifier.rovingFocusContainer(
+                                    up = {
+                                        val currentItem = activeRef.value ?: defaultItem.value
+                                        val currentIndex = rooms.value.indexOfFirst { it.id == currentItem }
+                                        val nextIndex = currentIndex.minus(1).coerceIn(rooms.value.indices)
+                                        val nextItem = rooms.value[nextIndex].id
+                                        activeRef.value = nextItem
+                                        selectItem(nextItem) {
+                                            lazyListState.scrollToItem(rooms.value.indexOfFirst { it.id == nextItem })
                                         }
+                                    },
+                                    down = {
+                                        val currentItem = activeRef.value ?: defaultItem.value
+                                        val currentIndex = rooms.value.indexOfFirst { it.id == currentItem }
+                                        val nextIndex = currentIndex.plus(1).coerceIn(rooms.value.indices)
+                                        val nextItem = rooms.value[nextIndex].id
+                                        activeRef.value = nextItem
+                                        selectItem(nextItem) {
+                                            lazyListState.scrollToItem(rooms.value.indexOfFirst { it.id == nextItem })
+                                        }
+                                    },
                                 )
+                            ) {
+                                items(rooms.value, key = { it.id }) { room ->
+                                    val interactionSource = remember { MutableInteractionSource() }
+
+                                    ListItem(
+                                        leadingContent = { Avatar(room.name.first().toString(), size = 40.dp) },
+                                        headlineContent = {
+                                            Text(room.name)
+                                        },
+                                        supportingContent = { Text("Lorem Ipsum I dolor sit amet") },
+                                        tonalElevation = if (selectedChat.value == room.id) 4.dp else 0.dp,
+                                        modifier = Modifier
+                                            .rovingFocusItem(room.id, defaultItem.value)
+                                            .focusBorder(interactionSource)
+                                            .clickable(interactionSource, LocalIndication.current) {
+                                                selectedChat.value = room.id
+                                                rovingFocusState.selectItem(room.id, shouldFocus = true) {
+                                                    lazyListState.scrollToItem(rooms.value.indexOfFirst { it.id == room.id })
+                                                }
+                                            }
+                                    )
+                                }
                             }
                         }
                     }
@@ -148,7 +127,7 @@ fun App() {
                         },
                         title = {
                             ProfileButton(
-                                label = selectedChat.value.first,
+                                label = rooms.value.find { it.id == selectedChat.value }!!.name,
                                 onClick = {},
                             )
                         },
@@ -204,47 +183,86 @@ fun App() {
                     }
                 }
             ) { contentPadding ->
-                val navigationState = rememberNavigationState(SampleData.messageItems.last(), SampleData.messageItems)
-                val lazyListState = rememberListNavigationState(navigationState)
+                val defaultItem = remember {
+                    derivedStateOf {
+                        messages.value.last().id
+                    }
+                }
+                val lazyListState = rememberLazyListState(messages.value.indexOfFirst { it.id == defaultItem.value })
 
-                LazyColumn(
-                    state = lazyListState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(contentPadding)
-                        .navigationList(navigationState, lazyListState),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    contentPadding = PaddingValues(top = 120.dp, bottom = 16.dp)
-                ) {
-                    items(SampleData.messages, key = { it.first }) { (message, messageFocusRequester) ->
-                        val interactionSource = remember { MutableInteractionSource() }
+                RovingFocusContainer {
+                    val rovingFocusState = LocalRovingFocus.current
 
-                        MessageBubble(
-                            message.isMe,
-                            message.showSender,
-                            avatar = { Avatar(message.sender.first().toString(), size = 36.dp) },
-                            sender = {
-                                Text(
-                                    message.sender,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.paddingFromBaseline(top = 20.sp),
-                                )
-                            },
-                            timestamp = {
-                                Text(
-                                    message.timestamp,
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = LocalContentColor.current.copy(alpha = 0.67f),
-                                    modifier = Modifier.paddingFromBaseline(top = 20.sp),
-                                )
-                            },
-                            modifier = Modifier.navigationListItem(navigationState, messageFocusRequester),
-                            childModifier = Modifier.navigationListItemChild(navigationState, messageFocusRequester),
-                            interactionSource = interactionSource,
-                        ) {
-                            Text(message.content, style = MaterialTheme.typography.bodyMedium)
+                    LaunchedEffect(rovingFocusState, defaultItem.value) {
+                        val nextItem = defaultItem.value
+                        rovingFocusState.selectItem(nextItem) {
+                            lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
+                        }
+                    }
+
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(contentPadding)
+                            .rovingFocusContainer(
+                                up = {
+                                    val currentItem = activeRef.value ?: defaultItem.value
+                                    val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
+                                    val nextIndex = currentIndex.minus(1).coerceIn(messages.value.indices)
+                                    val nextItem = messages.value[nextIndex].id
+                                    activeRef.value = nextItem
+                                    selectItem(nextItem) {
+                                        lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
+                                    }
+                                },
+                                down = {
+                                    val currentItem = activeRef.value ?: defaultItem.value
+                                    val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
+                                    val nextIndex = currentIndex.plus(1).coerceIn(messages.value.indices)
+                                    val nextItem = messages.value[nextIndex].id
+                                    activeRef.value = nextItem
+                                    selectItem(nextItem) {
+                                        lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
+                                    }
+                                },
+                            ),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        contentPadding = PaddingValues(top = 120.dp, bottom = 16.dp)
+                    ) {
+                        items(messages.value, key = { it }) { message ->
+                            val interactionSource = remember { MutableInteractionSource() }
+
+                            MessageBubble(
+                                message.isMe,
+                                message.showSender,
+                                avatar = { Avatar(message.sender.first().toString(), size = 36.dp) },
+                                sender = {
+                                    Text(
+                                        message.sender,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.paddingFromBaseline(top = 20.sp),
+                                    )
+                                },
+                                timestamp = {
+                                    Text(
+                                        message.timestamp,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = LocalContentColor.current.copy(alpha = 0.67f),
+                                        modifier = Modifier.paddingFromBaseline(top = 20.sp),
+                                    )
+                                },
+                                modifier = Modifier.rovingFocusItem(message.id, defaultItem.value),
+                                childModifier = Modifier.rovingFocusChild(message.id, defaultItem.value),
+                                interactionSource = interactionSource,
+                                onFocus = {
+                                    rovingFocusState.selectItem(message.id, shouldFocus = true)
+                                }
+                            ) {
+                                Text(message.content, style = MaterialTheme.typography.bodyMedium)
+                            }
                         }
                     }
                 }

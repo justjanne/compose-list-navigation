@@ -2,43 +2,17 @@ package org.example.project
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.surfaceColorAtElevation
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -49,7 +23,6 @@ import compose_list_navigation.composeapp.generated.resources.more_vert
 import org.example.project.MessageBubbleDefaults.shapeOther
 import org.example.project.MessageBubbleDefaults.shapeOwn
 import org.jetbrains.compose.resources.vectorResource
-import sun.security.krb5.internal.KDCOptions.with
 
 object MessageBubbleDefaults {
     val shapeOwn = RoundedCornerShape(
@@ -77,6 +50,7 @@ fun MessageBubble(
     modifier: Modifier = Modifier,
     childModifier: Modifier = Modifier,
     interactionSource: MutableInteractionSource,
+    onFocus: () -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val padding = if (showSender) PaddingValues(
@@ -125,6 +99,7 @@ fun MessageBubble(
                     modifier = modifier,
                     expanded = expanded,
                     interactionSource = interactionSource,
+                    onFocus = onFocus,
                 ) {
                     DropdownMenuItem(
                         text = { Text("Reply") },
@@ -180,6 +155,7 @@ fun MessageBubble(
 @Composable
 fun MessageMenu(
     modifier: Modifier = Modifier,
+    onFocus: () -> Unit = {},
     expanded: MutableState<Boolean> = remember { mutableStateOf(true) },
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable ColumnScope.() -> Unit,
@@ -196,7 +172,10 @@ fun MessageMenu(
         contentAlignment = Alignment.Center,
     ) {
         IconButton(
-            onClick = { expanded.value = true },
+            onClick = {
+                expanded.value = true
+                onFocus()
+            },
             interactionSource = interactionSource,
             modifier = modifier.focusBorder(interactionSource, CircleShape)
                 .requiredSize(with (LocalDensity.current) { LocalTextStyle.current.lineHeight.toDp() + 12.dp }),

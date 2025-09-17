@@ -1,6 +1,10 @@
 package org.example.project
 
-import androidx.compose.ui.focus.FocusRequester
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
+
+@JvmInline
+value class RoomId(val full: String)
 
 object SampleData {
     data class MessageData(
@@ -9,7 +13,9 @@ object SampleData {
         val content: String,
     )
 
+    @OptIn(ExperimentalUuidApi::class)
     data class Message(
+        val id: Uuid = Uuid.random(),
         val sender: String,
         val timestamp: String,
         val content: String,
@@ -18,16 +24,20 @@ object SampleData {
     )
 
     val rooms = listOf(
-        "Headroom",
-        "Broom",
-        "Weltraum",
-        "Traum",
-        "Vroom",
-        "Chatroom",
-    ).map { Pair(it, FocusRequester()) }
+        Room(RoomId("#mind"), "Headroom"),
+        Room(RoomId("#broom"), "Broom"),
+        Room(RoomId("#space"), "Weltraum"),
+        Room(RoomId("#dream"), "Traum"),
+        Room(RoomId("#vroom"), "Vroom"),
+        Room(RoomId("#chat"), "Chatroom"),
+    )
 
-    val roomItems = rooms.map { it.second }
+    data class Room(
+        val id: RoomId,
+        val name: String,
+    )
 
+    @OptIn(ExperimentalUuidApi::class)
     val messages = listOf(
         MessageData(sender="Verse", timestamp="00:03:05", content="If you got time to lean,"),
         MessageData(sender="Verse", timestamp="00:05:04", content="Then you got time to clean,"),
@@ -136,10 +146,8 @@ object SampleData {
                     isMe = data.sender == "Interlude"
                 )
                 previousMessage = message
-                add(Pair(message, FocusRequester()))
+                add(message)
             }
         }
     }
-
-    val messageItems = messages.map { it.second }
 }
