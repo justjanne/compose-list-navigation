@@ -115,8 +115,8 @@ fun App() {
                 }
             }
         ) {
-            Scaffold(
-                topBar = {
+            Scaffold { contentPadding ->
+                Column(Modifier.padding(contentPadding)) {
                     TopAppBar(
                         navigationIcon = {
                             ToolbarButton(
@@ -151,8 +151,91 @@ fun App() {
                             )
                         }
                     )
-                },
-                bottomBar = {
+                    val defaultItem = remember {
+                        derivedStateOf {
+                            messages.value.last().id
+                        }
+                    }
+                    val lazyListState =
+                        rememberLazyListState(messages.value.indexOfFirst { it.id == defaultItem.value })
+
+                    RovingFocusContainer {
+                        val rovingFocusState = LocalRovingFocus.current
+
+                        LaunchedEffect(rovingFocusState, defaultItem.value) {
+                            val nextItem = defaultItem.value
+                            rovingFocusState.selectItem(nextItem) {
+                                lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
+                            }
+                        }
+
+                        LazyColumn(
+                            state = lazyListState,
+                            modifier = Modifier
+                                .weight(1f, false)
+                                .verticalRovingFocus(
+                                    up = {
+                                        val currentItem = activeRef.value ?: defaultItem.value
+                                        val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
+                                        val nextIndex = currentIndex.minus(1).coerceIn(messages.value.indices)
+                                        val nextItem = messages.value[nextIndex].id
+                                        activeRef.value = nextItem
+                                        selectItem(nextItem) {
+                                            lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
+                                        }
+                                    },
+                                    down = {
+                                        val currentItem = activeRef.value ?: defaultItem.value
+                                        val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
+                                        val nextIndex = currentIndex.plus(1).coerceIn(messages.value.indices)
+                                        val nextItem = messages.value[nextIndex].id
+                                        activeRef.value = nextItem
+                                        selectItem(nextItem) {
+                                            lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
+                                        }
+                                    },
+                                ),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            contentPadding = PaddingValues(top = 120.dp, bottom = 16.dp)
+                        ) {
+                            items(messages.value, key = { it }) { message ->
+                                val interactionSource = remember { MutableInteractionSource() }
+
+                                MessageBubble(
+                                    message.isMe,
+                                    message.showSender,
+                                    avatar = { Avatar(message.sender.first().toString(), size = 36.dp) },
+                                    sender = {
+                                        Text(
+                                            message.sender,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.paddingFromBaseline(top = 20.sp),
+                                        )
+                                    },
+                                    timestamp = {
+                                        Text(
+                                            message.timestamp,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = LocalContentColor.current.copy(alpha = 0.67f),
+                                            modifier = Modifier.paddingFromBaseline(top = 20.sp),
+                                        )
+                                    },
+                                    modifier = Modifier.rovingFocusItem(message.id, defaultItem.value),
+                                    childModifier = Modifier.rovingFocusChild(message.id, defaultItem.value),
+                                    interactionSource = interactionSource,
+                                    onFocus = {
+                                        rovingFocusState.selectItem(message.id, shouldFocus = true)
+                                    }
+                                ) {
+                                    Text(message.content, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+                    }
+
+
                     BottomAppBar {
                         ToolbarButton(
                             label = "Add Emoji",
@@ -180,90 +263,6 @@ fun App() {
                             icon = vectorResource(Res.drawable.send),
                             onClick = {},
                         )
-                    }
-                }
-            ) { contentPadding ->
-                val defaultItem = remember {
-                    derivedStateOf {
-                        messages.value.last().id
-                    }
-                }
-                val lazyListState = rememberLazyListState(messages.value.indexOfFirst { it.id == defaultItem.value })
-
-                RovingFocusContainer {
-                    val rovingFocusState = LocalRovingFocus.current
-
-                    LaunchedEffect(rovingFocusState, defaultItem.value) {
-                        val nextItem = defaultItem.value
-                        rovingFocusState.selectItem(nextItem) {
-                            lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
-                        }
-                    }
-
-                    LazyColumn(
-                        state = lazyListState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(contentPadding)
-                            .verticalRovingFocus(
-                                up = {
-                                    val currentItem = activeRef.value ?: defaultItem.value
-                                    val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
-                                    val nextIndex = currentIndex.minus(1).coerceIn(messages.value.indices)
-                                    val nextItem = messages.value[nextIndex].id
-                                    activeRef.value = nextItem
-                                    selectItem(nextItem) {
-                                        lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
-                                    }
-                                },
-                                down = {
-                                    val currentItem = activeRef.value ?: defaultItem.value
-                                    val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
-                                    val nextIndex = currentIndex.plus(1).coerceIn(messages.value.indices)
-                                    val nextItem = messages.value[nextIndex].id
-                                    activeRef.value = nextItem
-                                    selectItem(nextItem) {
-                                        lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
-                                    }
-                                },
-                            ),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        contentPadding = PaddingValues(top = 120.dp, bottom = 16.dp)
-                    ) {
-                        items(messages.value, key = { it }) { message ->
-                            val interactionSource = remember { MutableInteractionSource() }
-
-                            MessageBubble(
-                                message.isMe,
-                                message.showSender,
-                                avatar = { Avatar(message.sender.first().toString(), size = 36.dp) },
-                                sender = {
-                                    Text(
-                                        message.sender,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.paddingFromBaseline(top = 20.sp),
-                                    )
-                                },
-                                timestamp = {
-                                    Text(
-                                        message.timestamp,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = LocalContentColor.current.copy(alpha = 0.67f),
-                                        modifier = Modifier.paddingFromBaseline(top = 20.sp),
-                                    )
-                                },
-                                modifier = Modifier.rovingFocusItem(message.id, defaultItem.value),
-                                childModifier = Modifier.rovingFocusChild(message.id, defaultItem.value),
-                                interactionSource = interactionSource,
-                                onFocus = {
-                                    rovingFocusState.selectItem(message.id, shouldFocus = true)
-                                }
-                            ) {
-                                Text(message.content, style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
                     }
                 }
             }
