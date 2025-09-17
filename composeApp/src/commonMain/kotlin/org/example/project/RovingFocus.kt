@@ -115,6 +115,9 @@ fun Modifier.verticalRovingFocus(
                     true
                 }
 
+                Key.DirectionLeft -> true
+                Key.DirectionRight -> true
+
                 else -> false
             }
         }
@@ -142,6 +145,9 @@ fun Modifier.horizontalRovingFocus(
                     if (event.type == KeyEventType.KeyDown) rovingFocusState.right()
                     true
                 }
+
+                Key.DirectionUp -> true
+                Key.DirectionDown -> true
 
                 else -> false
             }
