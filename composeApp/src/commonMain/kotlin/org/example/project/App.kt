@@ -66,25 +66,21 @@ fun App() {
                                 state = lazyListState,
                                 contentPadding = PaddingValues(vertical = 12.dp),
                                 modifier = Modifier.verticalRovingFocus(
+                                    default = defaultItem.value,
+                                    scroll = { item ->
+                                        lazyListState.scrollToItem(rooms.value.indexOfFirst { it.id == item })
+                                    },
                                     up = {
                                         val currentItem = activeRef.value ?: defaultItem.value
                                         val currentIndex = rooms.value.indexOfFirst { it.id == currentItem }
                                         val nextIndex = currentIndex.minus(1).coerceIn(rooms.value.indices)
-                                        val nextItem = rooms.value[nextIndex].id
-                                        activeRef.value = nextItem
-                                        selectItem(nextItem) {
-                                            lazyListState.scrollToItem(rooms.value.indexOfFirst { it.id == nextItem })
-                                        }
+                                        rooms.value[nextIndex].id
                                     },
                                     down = {
                                         val currentItem = activeRef.value ?: defaultItem.value
                                         val currentIndex = rooms.value.indexOfFirst { it.id == currentItem }
                                         val nextIndex = currentIndex.plus(1).coerceIn(rooms.value.indices)
-                                        val nextItem = rooms.value[nextIndex].id
-                                        activeRef.value = nextItem
-                                        selectItem(nextItem) {
-                                            lazyListState.scrollToItem(rooms.value.indexOfFirst { it.id == nextItem })
-                                        }
+                                        rooms.value[nextIndex].id
                                     },
                                 )
                             ) {
@@ -162,37 +158,26 @@ fun App() {
                     RovingFocusContainer {
                         val rovingFocusState = LocalRovingFocus.current
 
-                        LaunchedEffect(rovingFocusState, defaultItem.value) {
-                            val nextItem = defaultItem.value
-                            rovingFocusState.selectItem(nextItem) {
-                                lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
-                            }
-                        }
-
                         LazyColumn(
                             state = lazyListState,
                             modifier = Modifier
                                 .weight(1f, false)
                                 .verticalRovingFocus(
+                                    default = defaultItem.value,
+                                    scroll = { item ->
+                                        lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == item })
+                                    },
                                     up = {
                                         val currentItem = activeRef.value ?: defaultItem.value
                                         val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
                                         val nextIndex = currentIndex.minus(1).coerceIn(messages.value.indices)
-                                        val nextItem = messages.value[nextIndex].id
-                                        activeRef.value = nextItem
-                                        selectItem(nextItem) {
-                                            lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
-                                        }
+                                        messages.value[nextIndex].id
                                     },
                                     down = {
                                         val currentItem = activeRef.value ?: defaultItem.value
                                         val currentIndex = messages.value.indexOfFirst { it.id == currentItem }
                                         val nextIndex = currentIndex.plus(1).coerceIn(messages.value.indices)
-                                        val nextItem = messages.value[nextIndex].id
-                                        activeRef.value = nextItem
-                                        selectItem(nextItem) {
-                                            lazyListState.scrollToItem(messages.value.indexOfFirst { it.id == nextItem })
-                                        }
+                                        messages.value[nextIndex].id
                                     },
                                 ),
                             horizontalAlignment = Alignment.CenterHorizontally,

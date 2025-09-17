@@ -131,22 +131,19 @@ fun MessageBubble(
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier.horizontalRovingFocus(
+                    modifier = childModifier.horizontalRovingFocus(
+                        default = defaultItem.value,
                         left = {
                             val currentItem = activeRef.value ?: defaultItem.value
                             val currentIndex = reactions.value.indexOfFirst { it == currentItem }
                             val nextIndex = currentIndex.minus(1).coerceIn(reactions.value.indices)
-                            val nextItem = reactions.value[nextIndex]
-                            activeRef.value = nextItem
-                            selectItem(nextItem)
+                            reactions.value[nextIndex]
                         },
                         right = {
                             val currentItem = activeRef.value ?: defaultItem.value
                             val currentIndex = reactions.value.indexOfFirst { it == currentItem }
                             val nextIndex = currentIndex.plus(1).coerceIn(reactions.value.indices)
-                            val nextItem = reactions.value[nextIndex]
-                            activeRef.value = nextItem
-                            selectItem(nextItem)
+                            reactions.value[nextIndex]
                         },
                     )
                 ) {

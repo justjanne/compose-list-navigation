@@ -1,5 +1,7 @@
 package org.example.project
 
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
@@ -7,6 +9,7 @@ import androidx.compose.ui.focus.*
 import androidx.compose.ui.input.key.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlin.collections.get
 
 class RovingFocusState(
     val coroutineScope: CoroutineScope,
@@ -94,24 +97,50 @@ fun Modifier.rovingFocusChild(key: Any, default: Any? = null): Modifier {
 
 @Composable
 fun Modifier.verticalRovingFocus(
-    up: RovingFocusState.() -> Unit,
-    down: RovingFocusState.() -> Unit,
+    default: Any? = null,
+    up: RovingFocusState.() -> Any?,
+    down: RovingFocusState.() -> Any?,
+    scroll: suspend CoroutineScope.(Any?) -> Unit = {},
 ): Modifier {
-    val rovingFocusState = LocalRovingFocus.current
+    val state = LocalRovingFocus.current
+    val interactionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(state, default) {
+        val item = state.activeRef.value ?: default
+        state.selectItem(item) { scroll(item) }
+    }
 
     return this then Modifier
         .onFocusEvent {
-            rovingFocusState.hasFocus = it.hasFocus
+            state.hasFocus = it.hasFocus
+            if (it.isFocused) {
+                val item = state.activeRef.value ?: default
+                state.selectItem(item) { scroll(item) }
+            }
         }
+        .focusProperties {
+            val item = state.activeRef.value ?: default
+            if (state.references[item] != null) {
+                canFocus = false
+            }
+        }
+        .focusBorder(interactionSource)
+        .focusable(interactionSource = interactionSource)
         .onKeyEvent { event ->
             when (event.key) {
                 Key.DirectionUp -> {
-                    if (event.type == KeyEventType.KeyDown) rovingFocusState.up()
+                    if (event.type == KeyEventType.KeyDown) {
+                        val item = state.up()
+                        state.selectItem(item) { scroll(item) }
+                    }
                     true
                 }
 
                 Key.DirectionDown -> {
-                    if (event.type == KeyEventType.KeyDown) rovingFocusState.down()
+                    if (event.type == KeyEventType.KeyDown) {
+                        val item = state.down()
+                        state.selectItem(item) { scroll(item) }
+                    }
                     true
                 }
 
@@ -125,24 +154,45 @@ fun Modifier.verticalRovingFocus(
 
 @Composable
 fun Modifier.horizontalRovingFocus(
-    left: RovingFocusState.() -> Unit,
-    right: RovingFocusState.() -> Unit,
+    default: Any? = null,
+    left: RovingFocusState.() -> Any?,
+    right: RovingFocusState.() -> Any?,
+    scroll: suspend CoroutineScope.(Any?) -> Unit = {},
 ): Modifier {
-    val rovingFocusState = LocalRovingFocus.current
+    val state = LocalRovingFocus.current
+    val interactionSource = remember { MutableInteractionSource() }
 
     return this then Modifier
         .onFocusEvent {
-            rovingFocusState.hasFocus = it.hasFocus
+            state.hasFocus = it.hasFocus
+            if (it.isFocused) {
+                val item = state.activeRef.value ?: default
+                state.selectItem(item) { scroll(item) }
+            }
         }
+        .focusProperties {
+            val item = state.activeRef.value ?: default
+            if (state.references[item] != null) {
+                canFocus = false
+            }
+        }
+        .focusBorder(interactionSource)
+        .focusable(interactionSource = interactionSource)
         .onKeyEvent { event ->
             when (event.key) {
                 Key.DirectionLeft -> {
-                    if (event.type == KeyEventType.KeyDown) rovingFocusState.left()
+                    if (event.type == KeyEventType.KeyDown) {
+                        val item = state.left()
+                        state.selectItem(item) { scroll(item) }
+                    }
                     true
                 }
 
                 Key.DirectionRight -> {
-                    if (event.type == KeyEventType.KeyDown) rovingFocusState.right()
+                    if (event.type == KeyEventType.KeyDown) {
+                        val item = state.right()
+                        state.selectItem(item) { scroll(item) }
+                    }
                     true
                 }
 
