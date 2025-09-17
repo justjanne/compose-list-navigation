@@ -71,7 +71,10 @@ fun Modifier.rovingFocusItem(key: Any, default: Any? = null): Modifier {
     return this then Modifier
         .focusProperties {
             val current = rovingFocusState.activeRef.value ?: default
-            canFocus = rovingFocusState.isFocussing || current == key
+            val focusable = rovingFocusState.isFocussing || current == key
+            if (!focusable) {
+                canFocus = false
+            }
         }
         .focusRequester(focusRequester)
 }
@@ -82,12 +85,15 @@ fun Modifier.rovingFocusChild(key: Any, default: Any? = null): Modifier {
     return this then Modifier
         .focusProperties {
             val current = rovingFocusState.activeRef.value ?: default
-            canFocus = rovingFocusState.isFocussing || current == key
+            val focusable = rovingFocusState.isFocussing || current == key
+            if (!focusable) {
+                canFocus = false
+            }
         }
 }
 
 @Composable
-fun Modifier.rovingFocusContainer(
+fun Modifier.verticalRovingFocus(
     up: RovingFocusState.() -> Unit,
     down: RovingFocusState.() -> Unit,
 ): Modifier {
@@ -106,6 +112,34 @@ fun Modifier.rovingFocusContainer(
 
                 Key.DirectionDown -> {
                     if (event.type == KeyEventType.KeyDown) rovingFocusState.down()
+                    true
+                }
+
+                else -> false
+            }
+        }
+}
+
+@Composable
+fun Modifier.horizontalRovingFocus(
+    left: RovingFocusState.() -> Unit,
+    right: RovingFocusState.() -> Unit,
+): Modifier {
+    val rovingFocusState = LocalRovingFocus.current
+
+    return this then Modifier
+        .onFocusEvent {
+            rovingFocusState.hasFocus = it.hasFocus
+        }
+        .onKeyEvent { event ->
+            when (event.key) {
+                Key.DirectionLeft -> {
+                    if (event.type == KeyEventType.KeyDown) rovingFocusState.left()
+                    true
+                }
+
+                Key.DirectionRight -> {
+                    if (event.type == KeyEventType.KeyDown) rovingFocusState.right()
                     true
                 }
 

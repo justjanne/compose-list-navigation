@@ -65,7 +65,7 @@ fun App() {
                             LazyColumn(
                                 state = lazyListState,
                                 contentPadding = PaddingValues(vertical = 12.dp),
-                                modifier = Modifier.rovingFocusContainer(
+                                modifier = Modifier.verticalRovingFocus(
                                     up = {
                                         val currentItem = activeRef.value ?: defaultItem.value
                                         val currentIndex = rooms.value.indexOfFirst { it.id == currentItem }
@@ -205,7 +205,7 @@ fun App() {
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(contentPadding)
-                            .rovingFocusContainer(
+                            .verticalRovingFocus(
                                 up = {
                                     val currentItem = activeRef.value ?: defaultItem.value
                                     val currentIndex = messages.value.indexOfFirst { it.id == currentItem }

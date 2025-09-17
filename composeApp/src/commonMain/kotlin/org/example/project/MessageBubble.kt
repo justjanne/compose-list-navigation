@@ -119,25 +119,61 @@ fun MessageBubble(
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text("❤\uFE0F 1") },
-                    shape = CircleShape,
-                    modifier = childModifier,
-                )
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text("\uD83D\uDC4D 1") },
-                    shape = CircleShape,
-                    modifier = childModifier,
-                )
-                SuggestionChip(
-                    onClick = {},
-                    label = { Icon(vectorResource(Res.drawable.add_reaction), contentDescription = null, modifier = Modifier.requiredSize(24.dp)) },
-                    shape = CircleShape,
-                    modifier = childModifier,
-                )
+            RovingFocusContainer {
+                val reactions = remember {
+                    mutableStateOf(listOf("❤\uFE0F", "\uD83D\uDC4D", ""))
+                }
+                val defaultItem = remember {
+                    derivedStateOf {
+                        reactions.value.first()
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.horizontalRovingFocus(
+                        left = {
+                            val currentItem = activeRef.value ?: defaultItem.value
+                            val currentIndex = reactions.value.indexOfFirst { it == currentItem }
+                            val nextIndex = currentIndex.minus(1).coerceIn(reactions.value.indices)
+                            val nextItem = reactions.value[nextIndex]
+                            activeRef.value = nextItem
+                            selectItem(nextItem)
+                        },
+                        right = {
+                            val currentItem = activeRef.value ?: defaultItem.value
+                            val currentIndex = reactions.value.indexOfFirst { it == currentItem }
+                            val nextIndex = currentIndex.plus(1).coerceIn(reactions.value.indices)
+                            val nextItem = reactions.value[nextIndex]
+                            activeRef.value = nextItem
+                            selectItem(nextItem)
+                        },
+                    )
+                ) {
+                    for (reaction in reactions.value) {
+                        if (reaction == "") {
+                            SuggestionChip(
+                                onClick = {},
+                                label = {
+                                    Icon(
+                                        vectorResource(Res.drawable.add_reaction),
+                                        contentDescription = null,
+                                        modifier = Modifier.requiredSize(24.dp)
+                                    )
+                                },
+                                shape = CircleShape,
+                                modifier = childModifier.rovingFocusItem(reaction, defaultItem.value),
+                            )
+                        } else {
+                            SuggestionChip(
+                                onClick = {},
+                                label = { Text("$reaction 1") },
+                                shape = CircleShape,
+                                modifier = childModifier.rovingFocusItem(reaction, defaultItem.value),
+                            )
+                        }
+                    }
+                }
             }
         }
         if (isMe) {
